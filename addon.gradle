@@ -1,0 +1,11 @@
+// CurseForge now rejects uploads without a version from the mandatory "environment"
+// group (error 1021). GTNH's convention plugin only attaches gameVersions (MC + Forge),
+// so attach the environment versions ourselves before the upload task resolves them.
+
+tasks.matching { it.name == 'publishCurseforge' }.configureEach {
+    doFirst {
+        uploadArtifacts.each { artifact ->
+            artifact.addEnvironment('Client', 'Server')
+        }
+    }
+}
