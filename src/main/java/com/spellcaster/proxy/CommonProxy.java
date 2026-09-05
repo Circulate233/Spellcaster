@@ -5,6 +5,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import com.spellcaster.Config;
 import com.spellcaster.content.SpellcasterItems;
+import com.spellcaster.content.SpellcasterRecipes;
 import com.spellcaster.network.ServerTaskQueue;
 import com.spellcaster.network.SyncWheelStateMessage;
 import com.spellcaster.network.WheelNetwork;
@@ -29,6 +30,7 @@ public class CommonProxy {
         if (!Config.clientOnlyMode) {
             WheelNetwork.init();
             SpellcasterItems.register();
+            SpellcasterRecipes.register();
         }
     }
 
