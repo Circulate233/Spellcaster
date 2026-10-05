@@ -1,18 +1,15 @@
-{
-  "modid": "${modId}",
-  "name": "${modName}",
-  "description": "Spellcaster mod for Minecraft 1.7.10.",
-  "version": "${modVersion}",
-  "mcversion": "${minecraftVersion}",
-  "url": "",
-  "updateUrl": "",
-  "authorList": [],
-  "credits": "",
-  "logoFile": "",
-  "screenshots": [],
-  "parent": "",
-  "requiredMods": [],
-  "dependencies": [],
-  "dependants": [],
-  "useDependencyInformation": false
-}
+[
+  {
+    "modid": "${modId}",
+    "name": "${modName}",
+    "description": "Spellcaster mod for Minecraft 1.7.10.",
+    "version": "${modVersion}",
+    "mcversion": "${minecraftVersion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["Circulation_"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": []
+  }
+]

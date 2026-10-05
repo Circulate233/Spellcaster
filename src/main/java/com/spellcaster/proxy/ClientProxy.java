@@ -20,11 +20,12 @@ import com.spellcaster.wheel.WheelType;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent;
+import project.studio.manametalmod.MMM;
 import project.studio.manametalmod.event.EventGUI;
 
 public class ClientProxy extends CommonProxy {
 
-    private final EventGUI eventGUI = new EventGUI();
+    private EventGUI eventGUI;
     private final InputEvent.KeyInputEvent event = new InputEvent.KeyInputEvent();
     private ClientWheelController wheelController;
 
@@ -43,9 +44,12 @@ public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent
     public void onKeyInput(InputEvent.MouseInputEvent event) {
-        eventGUI.onKeyInput(this.event);
-        if (this.wheelController != null) {
-            this.wheelController.onKeyInput();
+        if (MMM.canUpdate(Minecraft.getMinecraft().thePlayer)) {
+            if (eventGUI == null) eventGUI = new EventGUI();
+            eventGUI.onKeyInput(this.event);
+            if (this.wheelController != null) {
+                this.wheelController.onKeyInput();
+            }
         }
     }
 
