@@ -30,11 +30,12 @@ public class CommonProxy {
         if (!Config.clientOnlyMode) {
             WheelNetwork.init();
             SpellcasterItems.register();
-            SpellcasterRecipes.register();
         }
     }
 
-    public void init(FMLInitializationEvent event) {}
+    public void init(FMLInitializationEvent event) {
+        SpellcasterRecipes.register();
+    }
 
     public void openWheelGui(ItemStack stack) {}
 
