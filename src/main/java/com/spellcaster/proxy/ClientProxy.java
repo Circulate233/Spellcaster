@@ -9,7 +9,8 @@ import net.minecraft.util.StatCollector;
 
 import com.spellcaster.client.ClientWheelController;
 import com.spellcaster.client.GuiSpellWheel;
-import com.spellcaster.item.WheelItemBase;
+import com.spellcaster.api.WheelCoreApi;
+import com.spellcaster.api.WheelCoreProvider;
 import com.spellcaster.network.SyncWheelStateMessage;
 import com.spellcaster.network.WheelStatusMessage;
 import com.spellcaster.wheel.ManaMetalBridge;
@@ -65,14 +66,15 @@ public class ClientProxy extends CommonProxy {
             .func_152344_a(() -> {
                 ItemStack stack = message.isHeldItem() ? Minecraft.getMinecraft().thePlayer.getCurrentEquippedItem()
                     : ManaMetalBridge.getCoreWheel(Minecraft.getMinecraft().thePlayer);
-                if (stack == null || !(stack.getItem() instanceof WheelItemBase item)) {
+                WheelCoreProvider provider = WheelCoreApi.getProvider(stack);
+                if (stack == null || provider == null) {
                     return;
                 }
-                int capacity = item.getCapacity(stack);
+                int capacity = WheelCoreApi.getCapacity(stack);
                 if (capacity != message.getCapacity()) {
                     return;
                 }
-                WheelMode mode = item.getWheelType() == WheelType.CHAOS ? WheelMode.CHAOS : message.getMode();
+                WheelMode mode = provider.getWheelType(stack) == WheelType.CHAOS ? WheelMode.CHAOS : message.getMode();
                 WheelNbt.write(stack, Arrays.copyOf(message.getSequence(), capacity), message.getCursor(), mode);
             });
     }

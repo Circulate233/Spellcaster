@@ -3,11 +3,13 @@ package com.spellcaster.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
-import com.spellcaster.item.WheelItemBase;
+import com.spellcaster.api.WheelCoreApi;
+import com.spellcaster.api.WheelCoreProvider;
 import com.spellcaster.wheel.ManaMetalBridge;
 import com.spellcaster.wheel.SkillSelection;
 import com.spellcaster.wheel.WheelMode;
 import com.spellcaster.wheel.WheelNbt;
+import com.spellcaster.wheel.WheelType;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -33,7 +35,8 @@ public class ActivateWheelMessage implements IMessage {
                 return;
             }
             ItemStack stack = ManaMetalBridge.getCoreWheel(player);
-            if (stack == null || !(stack.getItem() instanceof WheelItemBase item)) {
+            WheelCoreProvider provider = WheelCoreApi.getProvider(stack);
+            if (stack == null || provider == null) {
                 sendStatus(player, WheelStatusMessage.NO_WHEEL);
                 return;
             }
@@ -41,9 +44,10 @@ public class ActivateWheelMessage implements IMessage {
                 sendStatus(player, WheelStatusMessage.INVALID_CONFIG);
                 return;
             }
-            int capacity = item.getCapacity(stack);
-            WheelNbt.migrate(stack, capacity, item.getWheelType());
-            WheelMode mode = WheelNbt.readMode(stack, item.getWheelType());
+            int capacity = WheelCoreApi.getCapacity(stack);
+            WheelType type = provider.getWheelType(stack);
+            WheelNbt.migrate(stack, capacity, type);
+            WheelMode mode = WheelNbt.readMode(stack, type);
             int[] sequence = WheelNbt.readSequence(stack, capacity);
             SkillSelection selection = ManaMetalBridge
                 .select(player, sequence, WheelNbt.readCursor(stack, capacity), mode);
@@ -54,7 +58,7 @@ public class ActivateWheelMessage implements IMessage {
                     .sendTo(
                         new SyncWheelStateMessage(false, capacity, sequence, selection.getNextCursor(), mode),
                         player);
-            } else if (!selection.isSelected()) {
+            } else {
                 sendStatus(player, WheelStatusMessage.NO_AVAILABLE_SKILL);
             }
         }

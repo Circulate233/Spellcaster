@@ -10,6 +10,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 
 import com.spellcaster.Spellcaster;
+import com.spellcaster.api.WheelCoreProvider;
 import com.spellcaster.wheel.WheelNbt;
 import com.spellcaster.wheel.WheelType;
 
@@ -18,7 +19,7 @@ import project.studio.manametalmod.api.weapon.IMagicItem;
 import project.studio.manametalmod.core.ManaItemType;
 import project.studio.manametalmod.magic.magicItem.IMagicEffect;
 
-public abstract class WheelItemBase extends IMagicItem {
+public abstract class WheelItemBase extends IMagicItem implements WheelCoreProvider {
 
     @Getter
     private final WheelType wheelType;
@@ -32,11 +33,23 @@ public abstract class WheelItemBase extends IMagicItem {
         return Spellcaster.MODID;
     }
 
+    @Override
+    public boolean isEnabled(ItemStack stack, EntityPlayer player) {
+        return true;
+    }
+
+    @Override
     public int getCapacity(ItemStack stack) {
         int variant = this.getVariant(stack);
         return variant < 0 ? 0 : 7 * (variant + 1);
     }
 
+    @Override
+    public WheelType getWheelType(ItemStack stack) {
+        return this.wheelType;
+    }
+
+    @Override
     public int getNeedLV(ItemStack stack, EntityPlayer player) {
         int variant = this.getVariant(stack);
         return variant < 0 ? Integer.MAX_VALUE : variant == 0 ? 1 : variant == 1 ? 70 : 130;

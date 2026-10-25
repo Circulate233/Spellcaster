@@ -4,7 +4,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
-import com.spellcaster.item.WheelItemBase;
+import com.spellcaster.api.WheelCoreApi;
+import com.spellcaster.api.WheelCoreProvider;
 
 import project.studio.manametalmod.MMM;
 import project.studio.manametalmod.core.CareerCore;
@@ -31,19 +32,21 @@ public final class ManaMetalBridge {
             return null;
         }
         ItemStack stack = root.item.getStackInSlot(CORE_SLOT);
-        return stack != null && stack.getItem() instanceof WheelItemBase ? stack : null;
+        return WheelCoreApi.getProvider(stack) == null ? null : stack;
     }
 
     public static boolean canUseWheel(EntityPlayer player, ItemStack stack) {
         ManaMetalModRoot root = getRoot(player);
-        return root != null && root.carrer != null
-            && stack != null
-            && stack.getItem() instanceof WheelItemBase
-            && ((WheelItemBase) stack.getItem()).getCapacity(stack) > 0
-            && root.carrer.getLv() >= ((WheelItemBase) stack.getItem()).getNeedLV(stack, player);
+        WheelCoreProvider provider = WheelCoreApi.getProvider(stack);
+        return root != null && root.carrer != null && provider != null
+            && WheelCoreApi.isEnabled(stack, player)
+            && root.carrer.getLv() >= provider.getNeedLV(stack, player);
     }
 
     public static int getCooldown(NbtCareer career, int skillId) {
+        if (career == null || !WheelNbt.isSkillIdValid(skillId)) {
+            return Integer.MAX_VALUE;
+        }
         int tier = skillId / 100;
         int slot = skillId % 100;
         int[] cooldowns = tier == 1 ? career.getSpellCD_LV1()
@@ -56,11 +59,7 @@ public final class ManaMetalBridge {
         if (root == null || root.carrer == null || !isSkillConfigurable(player, skillId)) {
             return false;
         }
-        int tier = skillId / 100;
-        int slot = skillId % 100;
-        int[] levels = tier == 1 ? root.carrer.getSpellLV_1()
-            : tier == 2 ? root.carrer.getSpellLV_2() : root.carrer.getSpellLV_3();
-        return slot >= 0 && slot < levels.length && levels[slot] > 0 && getCooldown(root.carrer, skillId) <= 0;
+        return ManaMetalSkillRules.isAvailable(player, root, skillId);
     }
 
     public static boolean isSkillConfigurable(EntityPlayer player, int skillId) {
@@ -73,7 +72,8 @@ public final class ManaMetalBridge {
         boolean configurable = tier == 1 ? slot >= 2 && slot <= 4 : (slot >= 1 && slot <= 3) || slot == 6;
         int[] levels = tier == 1 ? root.carrer.getSpellLV_1()
             : tier == 2 ? root.carrer.getSpellLV_2() : root.carrer.getSpellLV_3();
-        return configurable && slot < levels.length && levels[slot] > 0;
+        return configurable && levels != null && slot < levels.length && levels[slot] > 0
+            && ManaMetalSkillRules.getSpell(CareerCore.getPlayerCarrer(root), skillId) != null;
     }
 
     public static SkillSelection select(EntityPlayer player, int[] sequence, int cursor, WheelMode mode) {
@@ -92,7 +92,7 @@ public final class ManaMetalBridge {
     public static boolean castServer(EntityPlayerMP player, int skillId) {
         ManaMetalModRoot root = getRoot(player);
         if (root != null && root.carrer != null && isSkillAvailable(player, skillId)) {
-            int oldCooldown = getCooldown(root.carrer, skillId);
+            ManaMetalSkillRules.CastState before = new ManaMetalSkillRules.CastState(player, root, skillId);
             EventSpell.doSkill_message(
                 skillId,
                 CareerCore.getPlayerCarrer(root),
@@ -102,9 +102,12 @@ public final class ManaMetalBridge {
                 true,
                 false,
                 root);
-            ArmorFXCore.skillEvent(player, root);
+            boolean cast = before.didCast(root);
+            if (cast) {
+                ArmorFXCore.skillEvent(player, root);
+            }
             root.carrer.send2();
-            return getCooldown(root.carrer, skillId) > oldCooldown;
+            return cast;
         }
         return false;
     }

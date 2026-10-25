@@ -3,10 +3,12 @@ package com.spellcaster.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
-import com.spellcaster.item.WheelItemBase;
+import com.spellcaster.api.WheelCoreApi;
+import com.spellcaster.api.WheelCoreProvider;
 import com.spellcaster.wheel.ManaMetalBridge;
 import com.spellcaster.wheel.WheelMode;
 import com.spellcaster.wheel.WheelNbt;
+import com.spellcaster.wheel.WheelType;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -67,23 +69,20 @@ public class SaveWheelConfigMessage implements IMessage {
                 return;
             }
             ItemStack stack = heldItem ? player.getCurrentEquippedItem() : ManaMetalBridge.getCoreWheel(player);
-            if (stack == null || !(stack.getItem() instanceof WheelItemBase item)) {
+            WheelCoreProvider provider = WheelCoreApi.getProvider(stack);
+            if (stack == null || provider == null) {
                 WheelNetwork.getInstance()
                     .sendTo(new WheelStatusMessage(WheelStatusMessage.NO_WHEEL), player);
                 return;
             }
-            int capacity = item.getCapacity(stack);
-            if (capacity <= 0) {
-                WheelNetwork.getInstance()
-                    .sendTo(new WheelStatusMessage(WheelStatusMessage.INVALID_CONFIG), player);
-                return;
-            }
-            WheelNbt.migrate(stack, capacity, item.getWheelType());
+            int capacity = WheelCoreApi.getCapacity(stack);
+            WheelType type = provider.getWheelType(stack);
+            WheelNbt.migrate(stack, capacity, type);
             int[] validated = new int[capacity];
             for (int i = 0; i < capacity; ++i) {
                 validated[i] = ManaMetalBridge.isSkillConfigurable(player, sequence[i]) ? sequence[i] : -1;
             }
-            WheelMode mode = WheelNbt.readMode(stack, item.getWheelType());
+            WheelMode mode = WheelNbt.readMode(stack, type);
             int cursor = WheelNbt.readCursor(stack, capacity);
             WheelNbt.write(stack, validated, cursor, mode);
             if (heldItem) {

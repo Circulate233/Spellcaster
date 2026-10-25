@@ -3,7 +3,8 @@ package com.spellcaster.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
-import com.spellcaster.item.WheelItemBase;
+import com.spellcaster.api.WheelCoreApi;
+import com.spellcaster.api.WheelCoreProvider;
 import com.spellcaster.wheel.ManaMetalBridge;
 import com.spellcaster.wheel.WheelMode;
 import com.spellcaster.wheel.WheelNbt;
@@ -33,7 +34,8 @@ public class CycleWheelModeMessage implements IMessage {
                 return;
             }
             ItemStack stack = ManaMetalBridge.getCoreWheel(player);
-            if (stack == null || !(stack.getItem() instanceof WheelItemBase item)) {
+            WheelCoreProvider provider = WheelCoreApi.getProvider(stack);
+            if (stack == null || provider == null) {
                 WheelNetwork.getInstance()
                     .sendTo(new WheelStatusMessage(WheelStatusMessage.NO_WHEEL), player);
                 return;
@@ -43,14 +45,15 @@ public class CycleWheelModeMessage implements IMessage {
                     .sendTo(new WheelStatusMessage(WheelStatusMessage.INVALID_CONFIG), player);
                 return;
             }
-            if (item.getWheelType() != WheelType.FATE) {
+            if (provider.getWheelType(stack) != WheelType.FATE) {
                 WheelNetwork.getInstance()
                     .sendTo(new WheelStatusMessage(WheelStatusMessage.MODE_UNAVAILABLE), player);
                 return;
             }
-            int capacity = item.getCapacity(stack);
-            WheelNbt.migrate(stack, capacity, item.getWheelType());
-            WheelMode current = WheelNbt.readMode(stack, item.getWheelType());
+            int capacity = WheelCoreApi.getCapacity(stack);
+            WheelType type = provider.getWheelType(stack);
+            WheelNbt.migrate(stack, capacity, type);
+            WheelMode current = WheelNbt.readMode(stack, type);
             WheelMode next = current == WheelMode.FATE_STRICT ? WheelMode.FATE_NORMAL : WheelMode.FATE_STRICT;
             WheelNbt.writeMode(stack, capacity, next);
             ManaMetalBridge.getRoot(player).item.synchronous();

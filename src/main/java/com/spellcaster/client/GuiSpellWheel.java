@@ -10,7 +10,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
 import com.spellcaster.Config;
-import com.spellcaster.item.WheelItemBase;
+import com.spellcaster.api.WheelCoreApi;
 import com.spellcaster.network.SaveWheelConfigMessage;
 import com.spellcaster.network.WheelNetwork;
 import com.spellcaster.wheel.WheelNbt;
@@ -44,9 +44,7 @@ public class GuiSpellWheel extends GuiSkill {
             1);
         this.wheelStack = stack;
         this.capacity = Config.clientOnlyMode ? 21
-            : stack != null && stack.getItem() instanceof WheelItemBase
-                ? ((WheelItemBase) stack.getItem()).getCapacity(stack)
-                : 0;
+            : WheelCoreApi.getCapacity(stack);
         this.heldItem = stack != null && Minecraft.getMinecraft().thePlayer.getCurrentEquippedItem() == stack;
         this.loadSequence(Config.clientOnlyMode ? Config.clientSequence : WheelNbt.readSequence(stack, this.capacity));
     }
